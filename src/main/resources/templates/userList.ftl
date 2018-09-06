@@ -9,7 +9,6 @@ List of users
         <th>Name</th>
         <th>Role</th>
         <th></th>
-
     </tr>
     </thead>
     <tbody>
@@ -22,5 +21,4 @@ List of users
     </#list>
 </tbody>
 </table>
-
 </@c.page>
