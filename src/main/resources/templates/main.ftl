@@ -11,7 +11,6 @@
 </div>
 
     <#include "parts/messageEdit.ftl" />
-
     <#include "parts/messageList.ftl" />
 
 </@c.page>

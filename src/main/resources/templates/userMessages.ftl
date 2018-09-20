@@ -4,7 +4,7 @@
 <h3>${userChannel.username}</h3>
     <#if !isCurrentUser>
         <#if isSubscriber>
-            <a class="btn btn-info" href="/user/subscribe/${userChannel.id}">Unsubscribe</a>
+            <a class="btn btn-info" href="/user/unsubscribe/${userChannel.id}">Unsubscribe</a>
         <#else>
             <a class="btn btn-info" href="/user/subscribe/${userChannel.id}">Subscribe</a>
         </#if>
@@ -14,7 +14,7 @@
         <div class="col">
             <div class="card">
                 <div class="card-body">
-                    <div class="card-title">Subcriptions</div>
+                    <div class="card-title">Subscriptions</div>
                     <h3 class="card-text">
                         <a href="/user/subscriptions/${userChannel.id}/list">${subscriptionsCount}</a>
                     </h3>
@@ -36,6 +36,5 @@
     <#if isCurrentUser>
         <#include "parts/messageEdit.ftl" />
     </#if>
-
     <#include "parts/messageList.ftl" />
 </@c.page>

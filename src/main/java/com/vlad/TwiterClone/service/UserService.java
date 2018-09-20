@@ -59,7 +59,7 @@ public class UserService implements UserDetailsService {
 
             String message = String.format(
                     "Hello, %s! \n"+
-                            "Welcome to Twiter clone. Please, visit next link: http://localhost:8080/activate/%s",
+                            "Welcome to Twitter clone. Please, visit next link: http://localhost:8080/activate/%s",
                     user.getUsername(),
                     user.getActivationCode()
             );
