@@ -13,14 +13,12 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.thymeleaf.util.StringUtils;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
@@ -82,7 +80,6 @@ public class MainController {
 
             model.addAttribute("message", null);
 
-
             messageRepo.save(message);
         }
 
@@ -91,7 +88,6 @@ public class MainController {
 
         model.addAttribute("page", page);
         model.addAttribute("url", "/main");
-
         return "main";
     }
 
@@ -120,31 +116,35 @@ public class MainController {
             @RequestParam(required = false) Message message,
             @PageableDefault(sort = { "id" }, direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        Set<Message> page = user.getMessages();
 
-        model.addAttribute("userChannel", user);
-        model.addAttribute("subscriptionsCount", user.getSubscriptions().size());
-        model.addAttribute("subscribersCount", user.getSubscribers().size());
-        model.addAttribute("isSubscriber", user.getSubscribers().contains(currentUser));
-        model.addAttribute("page", messageRepo.findAll(pageable));
-        model.addAttribute("url", "/user-messages/" + user.getId());
-        model.addAttribute("message", message);
-        model.addAttribute("isCurrentUser", currentUser.equals(user));
+            Set<Message> page = user.getMessages();
 
-        return "userMessages";
+            model.addAttribute("userChannel", user);
+            model.addAttribute("subscriptionsCount", user.getSubscriptions().size());
+            model.addAttribute("subscribersCount", user.getSubscribers().size());
+            model.addAttribute("isSubscriber", user.getSubscribers().contains(currentUser));
+            model.addAttribute("page", messageRepo.findAll(pageable));
+            model.addAttribute("url", "/user-messages/" + user.getId());
+            model.addAttribute("message", message);
+            model.addAttribute("messages", page);
+            model.addAttribute("isCurrentUser", currentUser.equals(user));
+            return "userMessages";
+
     }
 
     @PostMapping("/user-messages/{user}")
     public String updateMessage(
             @AuthenticationPrincipal User currentUser,
             @PathVariable Long user,
+            Model model,
             @RequestParam("id") Message message,
             @RequestParam("text") String text,
             @RequestParam("tag") String tag,
-            @RequestParam("file") MultipartFile file
+            @RequestParam("file") MultipartFile file,
+            @PageableDefault(sort = { "id" }, direction = Sort.Direction.DESC) Pageable pageable
     ) throws IOException {
         if (message.getAuthor().equals(currentUser)) {
-            if (!StringUtils.isEmpty(text) ) {
+            if (!StringUtils.isEmpty(text)) {
                 message.setText(text);
             }
 
@@ -153,12 +153,24 @@ public class MainController {
             }
 
             saveFile(message, file);
+
             messageRepo.save(message);
-
-
-
         }
-
+        model.addAttribute("page", messageRepo.findAll(pageable));
+        model.addAttribute("url", "/user-messages/" + user);
         return "redirect:/user-messages/" + user;
+    }
+
+    @GetMapping(path = "/user-messages/deleteById/{messageId}")
+    public String deleteById(
+            @PathVariable(name = "messageId") Long messageId,
+            Model model,
+            @PageableDefault(sort = { "id" }, direction = Sort.Direction.DESC) Pageable pageable
+            ){
+        messageRepo.deleteById(messageId);
+
+        model.addAttribute("page", messageRepo.findAll(pageable));
+        model.addAttribute("url", "/main" );
+        return "redirect:/main";
     }
 }

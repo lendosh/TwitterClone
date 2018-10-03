@@ -1,7 +1,9 @@
 package com.vlad.TwiterClone.service;
 
+import com.google.common.eventbus.EventBus;
 import com.vlad.TwiterClone.domain.Role;
 import com.vlad.TwiterClone.domain.User;
+import com.vlad.TwiterClone.events.SendMailEvent;
 import com.vlad.TwiterClone.repos.UserRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -21,7 +23,7 @@ public class UserService implements UserDetailsService {
     private UserRepo userRepo;
 
     @Autowired
-    private MailSender mailSender;
+    private EventBus eventBus;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -29,16 +31,18 @@ public class UserService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepo.findByUsername(username);
-        if(user == null){
+
+        if (user == null) {
             throw new UsernameNotFoundException("User not found");
         }
+
         return user;
     }
 
-    public boolean addUser(User user){
+    public boolean addUser(User user) {
         User userFromDb = userRepo.findByUsername(user.getUsername());
 
-        if(userFromDb != null){
+        if (userFromDb != null) {
             return false;
         }
 
@@ -55,8 +59,7 @@ public class UserService implements UserDetailsService {
     }
 
     private void sendMessage(User user) {
-        if (!StringUtils.isEmpty(user.getEmail())){
-
+        if (!StringUtils.isEmpty(user.getEmail())) {
             String message = String.format(
                     "Hello, %s! \n"+
                             "Welcome to Twitter clone. Please, visit next link: http://localhost:8080/activate/%s",
@@ -64,12 +67,11 @@ public class UserService implements UserDetailsService {
                     user.getActivationCode()
             );
 
-            mailSender.send(user.getEmail(), "Activation Code", message);
+            eventBus.post(new SendMailEvent(user.getEmail(), "Activation Code", message));
         }
     }
 
     public boolean activateUser(String code) {
-
         User user = userRepo.findByActivationCode(code);
 
         if(user == null){
@@ -87,7 +89,7 @@ public class UserService implements UserDetailsService {
         return userRepo.findAll();
     }
 
-    public void saveUser(User user, String username, Map<String,Object> form) {
+    public void saveUser(User user, String username, Map<String, String> form) {
         user.setUsername(username);
 
         Set<String> roles = Arrays.stream(Role.values())
@@ -96,40 +98,38 @@ public class UserService implements UserDetailsService {
 
         user.getRoles().clear();
 
-        for(String key : form.keySet()){
-            if(roles.contains(key)){
+        for (String key : form.keySet()) {
+            if (roles.contains(key)) {
                 user.getRoles().add(Role.valueOf(key));
             }
         }
 
         userRepo.save(user);
-
     }
 
     public void updateProfile(User user, String password, String email) {
         String userEmail = user.getEmail();
 
-       boolean isEmailChanged = (email !=null && !email.equals(userEmail) ||
-                (userEmail != null && !userEmail.equals(email)));
+        boolean isEmailChanged = (email != null && !email.equals(userEmail)) ||
+                (userEmail != null && !userEmail.equals(email));
 
-       if (isEmailChanged){
-           user.setEmail(email);
+        if (isEmailChanged) {
+            user.setEmail(email);
 
-           if(!StringUtils.isEmpty(email)){
-               user.setActivationCode(UUID.randomUUID().toString());
-           }
-       }
+            if (!StringUtils.isEmpty(email)) {
+                user.setActivationCode(UUID.randomUUID().toString());
+            }
+        }
 
-       if(!StringUtils.isEmpty(password)){
-           user.setPassword(password);
-       }
+        if (!StringUtils.isEmpty(password)) {
+            user.setPassword(password);
+        }
 
-       userRepo.save(user);
+        userRepo.save(user);
 
-       if (isEmailChanged) {
-           sendMessage(user);
-       }
-
+        if (isEmailChanged) {
+            sendMessage(user);
+        }
     }
 
     public void subscribe(User currentUser, User user) {

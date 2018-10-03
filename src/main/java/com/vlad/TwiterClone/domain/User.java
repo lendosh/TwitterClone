@@ -4,7 +4,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.persistence.*;
-import javax.transaction.Transactional;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import java.util.Collection;
@@ -23,14 +22,14 @@ public class User implements UserDetails {
     private String username;
     @NotBlank(message = "Password cann't be empty")
     private String password;
+
     private boolean active;
 
     @Email(message = "Email is not correct!")
     @NotBlank(message = "Email cann't be empty")
     private String email;
+
     private String activationCode;
-
-
 
     @ElementCollection(targetClass = Role.class, fetch = FetchType.EAGER)
     @CollectionTable(name = "user_role", joinColumns = @JoinColumn(name = "user_id"))

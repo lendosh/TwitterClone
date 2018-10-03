@@ -40,8 +40,6 @@ public class Message {
         this.author = author;
     }
 
-
-
     public Message() {
     }
 
